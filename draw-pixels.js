@@ -5,63 +5,66 @@
 
 /* global jQuery */
 
-const $ = jQuery
-
-const urlParam = window.location.search.substring(1)
-const paramsValues = urlParam.match(/(\d{1,4})/) || [1, 1]
+const $ = jQuery;
 
 const gridSpecifications = {
-  width: Number(paramsValues[0]),
-  height: Number(paramsValues[1])
-}
+  width: 1,
+  height: 1
+};
 
-const makeGrid = () => {
-  const table = $('#pixel-canvas')
-
-  for (let i = gridSpecifications.height - 1; i >= 0; i--) {
-    let tCell
-    let cellCounter = 0
-    const tRow = $('<tr/>')
-
-    while (cellCounter <= gridSpecifications.width - 1) {
-      tCell = $('<td class=\'pixel-cell\' />')
-      tRow.append(tCell)
-      cellCounter = cellCounter + 1
-    }
-
-    table.append(tRow)
-  }
-}
-
-const persistSpecificationsInput = () => {
-  $('#input-height').val(gridSpecifications.height)
-  $('#input-width').val(gridSpecifications.width)
-}
-
-const paintCell = (cell) => {
-  const pickedColor = $('#color-picker').val()
-  $(cell).attr('style', `background-color: ${pickedColor};`)
-}
+const paintCell = (cell, color) => {
+  $(cell).attr('style', `background-color: ${color};`);
+  $(cell).attr('data-color', color);
+};
 
 const bindCells = () => {
   $('.pixel-cell').on('click', (event) => {
-    const cell = event.currentTarget
-    const hasPaintedBackground = cell.style.length > 0
+    const pickedColor = $('#color-picker').val();
+    const cell = event.currentTarget;
+    const isDifferentColor = (cell.dataset.color !== pickedColor);
+    const hasBackgroundColor = cell.style.length > 0;
 
-    hasPaintedBackground ? $(cell).removeAttr('style') : paintCell(cell)
-  })
-}
+    if (isDifferentColor || !hasBackgroundColor) {
+      paintCell(cell, pickedColor);
+    } else {
+      $(cell).removeAttr('style');
+    }
+  });
+};
+
+const makeGrid = (canvas) => {
+  const previousGrid = canvas.children();
+  if (previousGrid.length > 0) previousGrid.remove();
+
+  for (let i = gridSpecifications.height - 1; i >= 0; i--) {
+    let tCell;
+    let cellCounter = 0;
+    const tRow = $('<tr/>');
+
+    while (cellCounter <= gridSpecifications.width - 1) {
+      tCell = $('<td class=\'pixel-cell\' />');
+      tRow.append(tCell);
+      cellCounter = cellCounter + 1;
+    }
+
+    canvas.append(tRow);
+  }
+  bindCells();
+};
+
+const populateGridSpecifications = () => {
+  gridSpecifications.width = $('#input-width').val();
+  gridSpecifications.height = $('#input-height').val();
+};
 
 const initPixelMaker = () => {
-  const width = gridSpecifications.width
-  const height = gridSpecifications.height
-  const paramsAreNumbers = typeof(width) === 'number' && typeof(height) === 'number'
+  const table = $('#pixel-canvas');
+  $('#grid-submit').click((event) => {
+    event.preventDefault();
+    populateGridSpecifications();
+    makeGrid(table);
+  });
+  makeGrid(table);
+};
 
-  if (paramsAreNumbers) {
-    persistSpecificationsInput()
-    makeGrid()
-    bindCells()
-  }
-}
-
-$(document).on('ready', initPixelMaker())
+$(document).on('ready', initPixelMaker());
